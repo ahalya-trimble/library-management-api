@@ -1,0 +1,95 @@
+
+@baseUrl = https://localhost:7052
+
+### 1. Get all books
+GET {{baseUrl}}/api/books
+
+### 2. Get one book
+GET {{baseUrl}}/api/books/1
+
+### 3. Create a book
+POST {{baseUrl}}/api/books
+Content-Type: application/json
+
+{
+  "title": "Clean Code",
+  "isbn": "9780132350884",
+  "author": "Robert C. Martin",
+  "available": true
+}
+
+### 4. Update a book
+PUT {{baseUrl}}/api/books/1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "title": "Clean Code - Updated",
+  "isbn": "9780132350884",
+  "author": "Robert C. Martin",
+  "available": true
+}
+
+### 5. Delete a book
+DELETE {{baseUrl}}/api/books/1
+
+### 6. Get all members
+GET {{baseUrl}}/api/members
+
+### 7. Create a member
+POST {{baseUrl}}/api/members
+Content-Type: application/json
+
+{
+  "name": "Ahalya",
+  "email": "ahalya@example.com",
+  "membershipDate": "2026-09-29T00:00:00"
+}
+
+### 8. Get one member
+GET {{baseUrl}}/api/members/1
+
+### 9. Update a member
+PUT {{baseUrl}}/api/members/1
+Content-Type: application/json
+
+{
+  "name": "Ahalya Updated",
+  "email": "ahalya@example.com",
+  "membershipDate": "2026-09-29T00:00:00"
+}
+
+### 10. Delete a member
+DELETE {{baseUrl}}/api/members/1
+
+### 11. Get all loans
+GET {{baseUrl}}/api/loans
+
+### 12. Create a loan
+POST {{baseUrl}}/api/loans
+Content-Type: application/json
+
+{
+  "bookId": 1,
+  "memberId": 2,
+  "loanDate": "2026-09-29T00:00:00",
+  "dueDate": "2026-10-13T00:00:00",
+  "returnDate": null
+}
+
+### 13. Get a specific loan
+GET {{baseUrl}}/api/loans/3
+
+### 14. Update the due date
+PUT {{baseUrl}}/api/loans/1
+Content-Type: application/json
+
+{
+  "dueDate": "2026-10-20T00:00:00"
+}
+
+### 15. Return the book
+POST {{baseUrl}}/api/loans/2/return
+
+### 16. Delete the completed loan record
+DELETE {{baseUrl}}/api/loans/1
