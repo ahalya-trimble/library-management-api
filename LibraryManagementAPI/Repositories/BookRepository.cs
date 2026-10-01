@@ -12,7 +12,7 @@ public class BookRepository : Repository<Book>, IBookRepository
     }
 
     public override async Task<IEnumerable<Book>> GetAllAsync() =>
-        await _dbSet.Where(b => !b.IsDeleted).ToListAsync();
+        await _dbSet.Include(b => b.Categories).Where(b => !b.IsDeleted).ToListAsync();
 
     public override async Task<Book?> GetByIdAsync(int id) =>
         await _dbSet.Include(b => b.Categories).FirstOrDefaultAsync(b => b.Id == id && !b.IsDeleted);
@@ -21,11 +21,11 @@ public class BookRepository : Repository<Book>, IBookRepository
         await _dbSet.AnyAsync(b => b.ISBN == isbn && (excludeId == null || b.Id != excludeId));
 
     public async Task<IEnumerable<Book>> GetAvailableBooksAsync() =>
-        await _dbSet.Where(b => !b.IsDeleted && b.Available).ToListAsync();
+        await _dbSet.Include(b => b.Categories).Where(b => !b.IsDeleted && b.Available).ToListAsync();
 
     public async Task<PagedResult<Book>> GetBooksAsync(BookQueryParameters queryParameters)
     {
-        var query = _dbSet.Where(b => !b.IsDeleted);
+        var query = _dbSet.Include(b => b.Categories).Where(b => !b.IsDeleted);
 
         if (!string.IsNullOrWhiteSpace(queryParameters.Author))
         {

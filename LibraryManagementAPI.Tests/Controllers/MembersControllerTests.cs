@@ -72,7 +72,7 @@ public class MembersControllerTests
     {
         _repositoryMock.Setup(r => r.EmailExistsAsync(It.IsAny<string>(), null)).ReturnsAsync(true);
 
-        var result = await _controller.CreateMember(new Member { Name = "John", Email = "john@example.com" });
+        var result = await _controller.CreateMember(new CreateMemberDto { Name = "John", Email = "john@example.com", MembershipDate = DateTime.UtcNow });
 
         Assert.IsType<ConflictObjectResult>(result.Result);
         _repositoryMock.Verify(r => r.AddAsync(It.IsAny<Member>()), Times.Never);
@@ -83,7 +83,7 @@ public class MembersControllerTests
     {
         _repositoryMock.Setup(r => r.EmailExistsAsync(It.IsAny<string>(), null)).ReturnsAsync(false);
 
-        var result = await _controller.CreateMember(new Member { Name = "John", Email = "john@example.com" });
+        var result = await _controller.CreateMember(new CreateMemberDto { Name = "John", Email = "john@example.com", MembershipDate = DateTime.UtcNow });
 
         Assert.IsType<CreatedAtActionResult>(result.Result);
         _repositoryMock.Verify(r => r.AddAsync(It.Is<Member>(m => m.Email == "john@example.com")), Times.Once);
@@ -94,7 +94,7 @@ public class MembersControllerTests
     {
         _repositoryMock.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((Member?)null);
 
-        var result = await _controller.UpdateMember(1, new Member { Name = "John", Email = "john@example.com" });
+        var result = await _controller.UpdateMember(1, new UpdateMemberDto { Name = "John", Email = "john@example.com", MembershipDate = DateTime.UtcNow });
 
         Assert.IsType<NotFoundResult>(result);
     }
@@ -105,7 +105,7 @@ public class MembersControllerTests
         _repositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(new Member { Id = 1, Name = "Old", Email = "old@example.com" });
         _repositoryMock.Setup(r => r.EmailExistsAsync("new@example.com", 1)).ReturnsAsync(true);
 
-        var result = await _controller.UpdateMember(1, new Member { Name = "New", Email = "new@example.com" });
+        var result = await _controller.UpdateMember(1, new UpdateMemberDto { Name = "New", Email = "new@example.com", MembershipDate = DateTime.UtcNow });
 
         Assert.IsType<ConflictObjectResult>(result);
     }

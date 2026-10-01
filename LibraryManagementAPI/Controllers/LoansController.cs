@@ -1,5 +1,6 @@
 ﻿
 using LibraryManagementAPI.Data;
+using LibraryManagementAPI.DTOs;
 using LibraryManagementAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,36 +22,44 @@ public class LoansController : ControllerBase
 
     // 1. GET: api/loans
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Loan>>> GetLoans()
+    public async Task<ActionResult<IEnumerable<LoanDto>>> GetLoans()
     {
-        return await _context.Loans.ToListAsync();
+        var loans = await _context.Loans
+            .Include(l => l.Book)
+            .Include(l => l.Member)
+            .ToListAsync();
+
+        return Ok(loans.Select(ToDto));
     }
 
     // 2. GET: api/loans/1
     [HttpGet("{id}")]
-    public async Task<ActionResult<Loan>> GetLoanById(int id)
+    public async Task<ActionResult<LoanDto>> GetLoanById(int id)
     {
-        var loan = await _context.Loans.FindAsync(id);
+        var loan = await _context.Loans
+            .Include(l => l.Book)
+            .Include(l => l.Member)
+            .FirstOrDefaultAsync(l => l.Id == id);
 
         if (loan == null)
             return NotFound();
 
-        return loan;
+        return ToDto(loan);
     }
 
     // 3. POST: api/loans
     [HttpPost]
-    public async Task<ActionResult<Loan>> CreateLoan(Loan loan)
+    public async Task<ActionResult<LoanDto>> CreateLoan(CreateLoanDto dto)
     {
-        if (loan.DueDate <= loan.LoanDate)
+        if (dto.DueDate <= dto.LoanDate)
             return BadRequest("Due date must be after the loan date.");
 
-        var book = await _context.Books.FindAsync(loan.BookId);
+        var book = await _context.Books.FindAsync(dto.BookId);
 
         if (book == null)
             return BadRequest("The specified book does not exist.");
 
-        var member = await _context.Members.FindAsync(loan.MemberId);
+        var member = await _context.Members.FindAsync(dto.MemberId);
 
         if (member == null)
             return BadRequest("The specified member does not exist.");
@@ -58,25 +67,33 @@ public class LoansController : ControllerBase
         if (!book.Available)
             return Conflict("This book is already on loan.");
 
-        if (loan.ReturnDate != null)
-            return BadRequest("A new loan cannot already have a return date.");
+        var loan = new Loan
+        {
+            BookId = dto.BookId,
+            MemberId = dto.MemberId,
+            LoanDate = dto.LoanDate,
+            DueDate = dto.DueDate
+        };
 
         book.Available = false;
 
         _context.Loans.Add(loan);
         await _context.SaveChangesAsync();
 
+        loan.Book = book;
+        loan.Member = member;
+
         return CreatedAtAction(
             nameof(GetLoanById),
             new { id = loan.Id },
-            loan);
+            ToDto(loan));
     }
 
     // 4. PUT: api/loans/1
     // Update the due date without changing the loan history.
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateLoan(
-        int id, Loan updatedLoan)
+        int id, UpdateLoanDto dto)
     {
         var loan = await _context.Loans.FindAsync(id);
 
@@ -86,10 +103,10 @@ public class LoansController : ControllerBase
         if (loan.ReturnDate != null)
             return Conflict("A returned loan cannot be modified.");
 
-        if (updatedLoan.DueDate <= loan.LoanDate)
+        if (dto.DueDate <= loan.LoanDate)
             return BadRequest("Due date must be after the loan date.");
 
-        loan.DueDate = updatedLoan.DueDate;
+        loan.DueDate = dto.DueDate;
 
         await _context.SaveChangesAsync();
 
@@ -140,4 +157,17 @@ public class LoansController : ControllerBase
 
         return NoContent();
     }
+
+    private static LoanDto ToDto(Loan loan) => new()
+    {
+        Id = loan.Id,
+        BookId = loan.BookId,
+        BookTitle = loan.Book?.Title ?? string.Empty,
+        MemberId = loan.MemberId,
+        MemberName = loan.Member?.Name ?? string.Empty,
+        LoanDate = loan.LoanDate,
+        DueDate = loan.DueDate,
+        ReturnDate = loan.ReturnDate,
+        Fine = loan.Fine
+    };
 }

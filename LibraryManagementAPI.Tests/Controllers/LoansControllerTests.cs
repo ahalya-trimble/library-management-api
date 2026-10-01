@@ -1,5 +1,6 @@
 using LibraryManagementAPI.Controllers;
 using LibraryManagementAPI.Data;
+using LibraryManagementAPI.DTOs;
 using LibraryManagementAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -35,7 +36,7 @@ public class LoansControllerTests
         var controller = new LoansController(context);
         var (book, member) = await SeedBookAndMember(context);
 
-        var loan = new Loan { BookId = book.Id, MemberId = member.Id, LoanDate = DateTime.UtcNow, DueDate = DateTime.UtcNow.AddDays(-1) };
+        var loan = new CreateLoanDto { BookId = book.Id, MemberId = member.Id, LoanDate = DateTime.UtcNow, DueDate = DateTime.UtcNow.AddDays(-1) };
 
         var result = await controller.CreateLoan(loan);
 
@@ -49,7 +50,7 @@ public class LoansControllerTests
         var controller = new LoansController(context);
         var (book, member) = await SeedBookAndMember(context, bookAvailable: false);
 
-        var loan = new Loan { BookId = book.Id, MemberId = member.Id, LoanDate = DateTime.UtcNow, DueDate = DateTime.UtcNow.AddDays(7) };
+        var loan = new CreateLoanDto { BookId = book.Id, MemberId = member.Id, LoanDate = DateTime.UtcNow, DueDate = DateTime.UtcNow.AddDays(7) };
 
         var result = await controller.CreateLoan(loan);
 
@@ -63,7 +64,7 @@ public class LoansControllerTests
         var controller = new LoansController(context);
         var (book, member) = await SeedBookAndMember(context);
 
-        var loan = new Loan { BookId = book.Id, MemberId = member.Id, LoanDate = DateTime.UtcNow, DueDate = DateTime.UtcNow.AddDays(7) };
+        var loan = new CreateLoanDto { BookId = book.Id, MemberId = member.Id, LoanDate = DateTime.UtcNow, DueDate = DateTime.UtcNow.AddDays(7) };
 
         var result = await controller.CreateLoan(loan);
 

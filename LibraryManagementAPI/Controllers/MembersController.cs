@@ -18,7 +18,7 @@ public class MembersController : ControllerBase
     public MembersController(IMemberRepository memberRepository) => _memberRepository = memberRepository;
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Member>>> GetMembers([FromQuery] MemberQueryParameters queryParameters)
+    public async Task<ActionResult<IEnumerable<MemberDto>>> GetMembers([FromQuery] MemberQueryParameters queryParameters)
     {
         var result = await _memberRepository.GetMembersAsync(queryParameters);
 
@@ -32,50 +32,55 @@ public class MembersController : ControllerBase
 
         Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(metadata));
 
-        return Ok(result.Items);
+        return Ok(result.Items.Select(ToDto));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Member>> GetMemberById(int id)
+    public async Task<ActionResult<MemberDto>> GetMemberById(int id)
     {
         var member = await _memberRepository.GetByIdAsync(id);
-        return member is null ? NotFound() : Ok(member);
+        return member is null ? NotFound() : Ok(ToDto(member));
     }
 
     [HttpGet("by-email")]
-    public async Task<ActionResult<Member>> GetMemberByEmail([FromQuery] string email)
+    public async Task<ActionResult<MemberDto>> GetMemberByEmail([FromQuery] string email)
     {
         var member = await _memberRepository.GetMemberByEmailAsync(email.Trim());
-        return member is null ? NotFound() : Ok(member);
+        return member is null ? NotFound() : Ok(ToDto(member));
     }
 
     [HttpPost]
-    public async Task<ActionResult<Member>> CreateMember(Member member)
+    public async Task<ActionResult<MemberDto>> CreateMember(CreateMemberDto dto)
     {
-        var email = member.Email.Trim();
+        var email = dto.Email.Trim();
         if (await _memberRepository.EmailExistsAsync(email))
             return Conflict("A member with this email already exists.");
 
-        member.Name = member.Name.Trim();
-        member.Email = email;
+        var member = new Member
+        {
+            Name = dto.Name.Trim(),
+            Email = email,
+            MembershipDate = dto.MembershipDate
+        };
+
         await _memberRepository.AddAsync(member);
 
-        return CreatedAtAction(nameof(GetMemberById), new { id = member.Id }, member);
+        return CreatedAtAction(nameof(GetMemberById), new { id = member.Id }, ToDto(member));
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> UpdateMember(int id, Member updatedMember)
+    public async Task<IActionResult> UpdateMember(int id, UpdateMemberDto dto)
     {
         var member = await _memberRepository.GetByIdAsync(id);
         if (member is null) return NotFound();
 
-        var email = updatedMember.Email.Trim();
+        var email = dto.Email.Trim();
         if (await _memberRepository.EmailExistsAsync(email, id))
             return Conflict("A member with this email already exists.");
 
-        member.Name = updatedMember.Name.Trim();
+        member.Name = dto.Name.Trim();
         member.Email = email;
-        member.MembershipDate = updatedMember.MembershipDate;
+        member.MembershipDate = dto.MembershipDate;
         await _memberRepository.UpdateAsync(member);
         return NoContent();
     }
@@ -90,4 +95,12 @@ public class MembersController : ControllerBase
         await _memberRepository.DeleteAsync(member);
         return NoContent();
     }
+
+    private static MemberDto ToDto(Member member) => new()
+    {
+        Id = member.Id,
+        Name = member.Name,
+        Email = member.Email,
+        MembershipDate = member.MembershipDate
+    };
 }
